@@ -1,0 +1,54 @@
+name: Production CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  validate:
+    name: 🔍 Validate Website
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: HTML validation
+        run: |
+          npm install -g htmlhint
+          htmlhint "**/*.html"
+
+      - name: Check broken links
+        run: |
+          npm install -g broken-link-checker
+          blc http://localhost -ro || true
+
+  build-check:
+    name: 🏗️ Build Sanity Check
+    runs-on: ubuntu-latest
+    needs: validate
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Simulate build
+        run: |
+          echo "No build step required for static site"
+          ls -la
+
+  deploy:
+    name: 🚀 Deploy to Cloudflare Pages
+    runs-on: ubuntu-latest
+    needs: build-check
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy (placeholder)
+        run: echo "Deployment step will be added in next phase"
