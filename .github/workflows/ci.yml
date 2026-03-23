@@ -101,17 +101,19 @@ jobs:
               \"messages\": [
                 {
                   \"role\": \"system\",
-                  \"content\": \"You are a senior frontend engineer. Review HTML, CSS, JS for best practices, accessibility, SEO, and performance. Keep response concise.\"
+                  \"content\": \"You are a senior frontend engineer. Review HTML, CSS, JS.\"
                 },
                 {
                   \"role\": \"user\",
-                  \"content\": \"Review this code diff:\\n\\n$(cat trimmed_diff.txt)\"
+                  \"content\": \"$(cat trimmed_diff.txt)\"
                 }
               ]
             }")
 
-          echo "$RESPONSE" | jq -r '.choices[0].message.content' > review.txt
+          echo "====== DEBUG RESPONSE ======"
+          echo "$RESPONSE"
 
+    echo "$RESPONSE" | jq -r '.choices[0].message.content' > review.txt
       - name: Post comment on PR
         uses: actions/github-script@v7
         with:
