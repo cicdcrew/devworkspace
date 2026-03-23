@@ -1,3 +1,13 @@
+name: Production CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
 jobs:
 
   validate:
@@ -8,15 +18,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: HTML validation
+      - name: Install HTMLHint
+        run: npm install -g htmlhint
+
+      - name: Run HTML validation
+        run: htmlhint "**/*.html"
+
+      - name: Start local server
         run: |
-          npm install -g htmlhint
-          htmlhint "**/*.html"
+          npm install -g http-server
+          http-server . -p 8080 &
+          sleep 5
 
       - name: Check broken links
         run: |
           npm install -g broken-link-checker
-          blc http://localhost -ro || true
+          blc http://localhost:8080 -ro
 
   build-check:
     name: 🏗️ Build Sanity Check
@@ -29,7 +46,7 @@ jobs:
 
       - name: Simulate build
         run: |
-          echo "No build step required for static site"
+          echo "Static site - no build required"
           ls -la
 
   deploy:
@@ -43,9 +60,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Deploy (placeholder)
-        run: echo "Deployment step will be added in next phase"
+        run: echo "Deployment step will be added later"
 
-  ai-review:   # ✅ NOW INSIDE jobs
+  ai-review:
     name: 🤖 AI PR Review
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
@@ -54,13 +71,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Get PR diff
-        run: |
-          git fetch origin main
-          git diff origin/main > diff.txt
+      - name: Fetch main branch
+        run: git fetch origin main
 
-      - name: Trim diff
-        run: head -c 5000 diff.txt > trimmed_diff.txt
+      - name: Get PR diff
+        run: git diff origin/main > diff.txt
+
+      - name: Trim diff (limit size)
+        run: head -c 4000 diff.txt > trimmed_diff.txt
 
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
@@ -78,7 +96,7 @@ jobs:
               \"messages\": [
                 {
                   \"role\": \"system\",
-                  \"content\": \"You are a senior frontend engineer. Review HTML, CSS, JS for best practices, accessibility, SEO, and performance.\"
+                  \"content\": \"You are a senior frontend engineer. Review HTML, CSS, JS for best practices, accessibility, SEO, and performance. Keep response concise.\"
                 },
                 {
                   \"role\": \"user\",
